@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { display: block; }
+		</style>
+	</head>
+	<body>
+		<script src="js/lib/three.js"></script>
+		<script src="js/lib/GLTFLoader.js"></script>
+		<script src="js/lib/OrbitControls.js"></script>
+		<script>
+var scene, camera, renderer
+
+var rotatingObject = null
+
+var models = [
+    "001-identity.glb", 
+    "002-website.glb", 
+    "003-arch.glb", 
+    "004-advertizing.glb"
+]
+
+var loadedModels = []
+
+var selectedModel = 0
+
+function init() {
+
+    scene = new THREE.Scene()
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
+    renderer = new THREE.WebGLRenderer()
+    
+    renderer.setSize( window.innerWidth, window.innerHeight )
+    document.body.appendChild( renderer.domElement )
+    
+    
+    
+    
+    var light = new THREE.PointLight( 0xff0000, 1, 100 )
+    light.position.set( 0, 0, 10 )
+    scene.add( light )
+    
+    light = new THREE.AmbientLight( 0xffffff ) // soft white light
+    scene.add( light )
+    
+    controls = new THREE.OrbitControls( camera, renderer.domElement )
+    
+    controls.minDistance = 2
+    controls.maxDistance = 10
+    controls.target.set( 0, 0, - 0.2 )
+    controls.update()
+}
+init()
+
+function loadModels() {
+    var loader = new THREE.GLTFLoader().setPath( 'models/' );
+    for (var i = 0; i < models.length; i++) {
+	    loader.load( models[i], function ( gltf ) {
+	        gltf.scene.traverse( function ( child ) {
+	            if ( child.isMesh ) {
+
+	                // TOFIX RoughnessMipmapper seems to be broken with WebGL 2.0
+	                // roughnessMipmapper.generateMipmaps( child.material );
+
+	            }
+	        } )
+
+			gltf.scene.scale.x = 0.2
+			gltf.scene.scale.y = 0.2
+			gltf.scene.scale.z = 0.2
+			gltf.scene.visible = false
+	        scene.add( gltf.scene )
+
+	        loadedModels.push( gltf.scene )
+	    } )
+    }
+}
+loadModels()
+
+
+function animate() {
+	if (rotatingObject != null) {
+		rotatingObject.rotation.y += 0.05
+	}
+	requestAnimationFrame( animate )
+	renderer.render( scene, camera )
+}
+animate()
+
+
+
+setInterval(function() {
+
+	// change the loaded model
+	if (selectedModel > 2) {
+		selectedModel = 0
+	}
+
+	if (loadedModels.length == models.length) {
+		if (rotatingObject != null) {
+			rotatingObject.visible = false
+		}
+
+		rotatingObject = loadedModels[selectedModel]
+		rotatingObject.visible = true
+		
+		selectedModel ++
+	}
+
+}, 5000)
+
+
+		</script>
+	</body>
+</html>
