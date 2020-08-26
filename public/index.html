@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Project 1</title>
+		<title>My first three.js app</title>
 		<style>
 			body { margin: 0; }
 			canvas { display: block; }
@@ -12,8 +12,11 @@
 		<script src="js/lib/three.js"></script>
 		<script src="js/lib/GLTFLoader.js"></script>
 		<script src="js/lib/OrbitControls.js"></script>
+		<script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
 		<script>
 var scene, camera, renderer
+
+var ROTATION_DISTANCE = 2
 
 var rotatingObject = null
 
@@ -24,9 +27,15 @@ var models = [
     "004-advertizing.glb"
 ]
 
+
+
+
+
 var loadedModels = []
 
 var selectedModel = 0
+
+var pointOfRotation;
 
 function init() {
 
@@ -37,7 +46,11 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight )
     document.body.appendChild( renderer.domElement )
     
+    //var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    //var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+    //pointOfRotation = new THREE.Mesh( geometry, material );
     
+    //scene.add( pointOfRotation );
     
     
     var light = new THREE.PointLight( 0xff0000, 1, 100 )
@@ -69,12 +82,17 @@ function loadModels() {
 	            }
 	        } )
 
+			console.log(gltf)
 			gltf.scene.scale.x = 0.2
 			gltf.scene.scale.y = 0.2
 			gltf.scene.scale.z = 0.2
 			gltf.scene.visible = false
-	        scene.add( gltf.scene )
+	        
 
+	        
+			//gltf.scene.position.z = ROTATION_DISTANCE
+
+			scene.add(gltf.scene)
 	        loadedModels.push( gltf.scene )
 	    } )
     }
@@ -84,7 +102,7 @@ loadModels()
 
 function animate() {
 	if (rotatingObject != null) {
-		rotatingObject.rotation.y += 0.05
+		rotatingObject.rotation.y += 0.02
 	}
 	requestAnimationFrame( animate )
 	renderer.render( scene, camera )
@@ -94,24 +112,41 @@ animate()
 
 
 setInterval(function() {
+
 	// change the loaded model
-	
-	if (selectedModel == models.length) {
+	if (selectedModel > 2) {
 		selectedModel = 0
 	}
 
+
+	console.log("tick")
 	if (loadedModels.length == models.length) {
+		loadedModels[selectedModel].visible = true
+		
 		if (rotatingObject != null) {
 			rotatingObject.visible = false
 		}
 
 		rotatingObject = loadedModels[selectedModel]
 		rotatingObject.visible = true
+
+		
+		// Research
+		rotatingObject.position.x = -2
+		rotatingObject.position.y = -2
+		createjs.Tween.get(rotatingObject.position).to({x:0, y:0}, 1000).wait(4000).to({x:2, y:2}, 1000).call(handleComplete);
+		function handleComplete() {
+			console.log("tweend")
+		}
+		
 		
 		selectedModel ++
 	}
 
-}, 2000)
+}, 5000)
+
+
+
 
 
 		</script>
