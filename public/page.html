@@ -1,0 +1,204 @@
+
+<script src="js/three.min.js"></script>
+<script src="js/GLTFLoader.js"></script>
+
+	<div id="container"></div>
+
+    <script type="x-shader/x-vertex" id="vertexShader">
+
+      varying vec3 vWorldPosition;
+
+      void main() {
+
+        vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+        vWorldPosition = worldPosition.xyz;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+      }
+
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShader">
+
+      uniform vec3 topColor;
+      uniform vec3 bottomColor;
+      uniform float offset;
+      uniform float exponent;
+
+      varying vec3 vWorldPosition;
+
+      void main() {
+
+        float h = normalize( vWorldPosition + offset ).y;
+        gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+
+      }
+
+    </script>
+
+    <script type="module">
+
+
+
+      var camera, scene, renderer, dirLight, dirLightHeper, hemiLight, hemiLightHelper;
+      var mixers = [];
+      var stats;
+      var axesHelper = new THREE.AxesHelper( 5 );
+      var clock = new THREE.Clock();
+
+      init();
+      animate();
+
+      function init() {
+
+        var container = document.getElementById( 'container' );
+
+        camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 5000 );
+        //camera.position.set( 0, 5, 5 );
+
+        camera.position.x = 10;
+        camera.position.y = 5;
+        camera.position.z = -1.5 + window.scrollY / 250.0;
+        camera.lookAt(0, 0, 0);
+
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
+        scene.fog = new THREE.Fog( scene.background, 1, 5000 );
+
+        // LIGHTS
+
+        hemiLight = new THREE.HemisphereLight( 0x5c8fd6, 0xd6e3f5, 0.8 );
+        hemiLight.color.setHSL( 0.6, 0.6, 0.6 );
+        // hemiLight.groundColor.setHex( 0.095, 1, 1 );
+        hemiLight.position.set( 0, 50, 0 );
+        scene.add( hemiLight );
+
+        hemiLightHelper = new THREE.HemisphereLightHelper( hemiLight, 10 );
+        scene.add( hemiLightHelper );
+
+        //
+
+        dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+        dirLight.color.setHSL( 0.1, 1, 0.95 );
+        dirLight.position.set( - 1, 1.75, 1 );
+        dirLight.position.multiplyScalar( 30 );
+        scene.add( dirLight );
+
+        dirLight.castShadow = true;
+
+        dirLight.shadow.mapSize.width = 4096;
+        dirLight.shadow.mapSize.height = 4096;
+
+        var d = 50;
+
+        dirLight.shadow.camera.left = - d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = - d;
+
+        dirLight.shadow.camera.far = 3500;
+        dirLight.shadow.bias = - 0.00001;
+
+        dirLightHeper = new THREE.DirectionalLightHelper( dirLight, 10 );
+        scene.add( dirLightHeper );
+
+        // GROUND
+
+        var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
+        var groundMat = new THREE.MeshLambertMaterial( { color: 0xfbfbfb } );
+        //groundMat.color.setHSL( 0.095, 1, 0.75 );
+
+        var ground = new THREE.Mesh( groundGeo, groundMat );
+        ground.position.y = -1;
+        ground.rotation.x = - Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add( ground );
+
+
+
+        //MODEL
+
+        var loader = new THREE.GLTFLoader();
+
+
+
+        loader.load( 'models/prm-identity.glb', function ( gltf ) {
+
+          var meshBX = gltf.scene.children[ 0 ];
+
+          var d = .5;
+          meshBX.scale.set( d, d, d );
+          meshBX.position.z = 0;
+          meshBX.position.y = 0;
+          meshBX.rotation.y = - 1;
+          meshBX.castShadow = true;
+          meshBX.receiveShadow = true;
+
+          scene.add( meshBX );
+
+        } );
+
+
+          scene.add( axesHelper );
+
+        // RENDERER
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        container.appendChild( renderer.domElement );
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+
+
+        window.addEventListener( 'resize', onWindowResize, false );
+      }
+
+      // Three JS Full Screen
+      function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+
+      //
+
+      function animate() {
+
+        requestAnimationFrame( animate );
+
+        render();
+        // stats.update();
+
+      }
+
+      function updateCamera(ev) {
+          let div1 = document.getElementById("div1");
+        camera.position.z = -1.5 + window.scrollY / 450.0;
+      }
+
+      window.addEventListener("scroll", updateCamera);
+
+      function render() {
+
+        // var delta = clock.getDelta();
+
+        // for ( var i = 0; i < mixers.length; i ++ ) {
+
+        //   mixers[ i ].update( delta );
+
+        // }
+
+        renderer.render( scene, camera );
+
+      }
+
+    </script>

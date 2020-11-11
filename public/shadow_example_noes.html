@@ -1,0 +1,120 @@
+<html>
+<head>
+<script src="js/three.min.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/EffectComposer.js"></script>
+<script src="js/RenderPass.js"></script>
+<script src="js/ShaderPass.js"></script>
+<script src="js/CopyShader.js"></script>
+<script src="js/SAOPass.js"></script>
+<script src="js/SAOShader.js"></script>
+<script src="js/DepthLimitedBlurShader.js"></script>
+<script src="js/UnpackDepthRGBAShader.js"></script>
+
+</head>
+<body>
+
+  <canvas id="canvas">
+  </canvas>
+</body>
+<script>
+
+
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    var canvas = document.getElementById('canvas');
+    canvas.setAttribute('width', width);
+    canvas.setAttribute('height', height);
+
+
+    var renderer = new THREE.WebGLRenderer({ alpha: true, canvas: canvas});
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
+    camera.position.set(0, 0, 1000);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    var light = new THREE.DirectionalLight(0xffffff,1);
+    light.position.set(0, 0, 1000);
+    light.target.position.set(0,0,0);
+
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 5000;
+    light.shadow.camera.left = -500;
+    light.shadow.camera.bottom = -500;
+    light.shadow.camera.right = 500;
+    light.shadow.camera.top = 500;
+
+    light.castShadow = true;
+    scene.add(light);
+    var helper = new THREE.CameraHelper( light.shadow.camera );
+    scene.add(helper);
+
+    var geometry = new THREE.SphereGeometry(200, 12, 12);
+    var material = new THREE.MeshLambertMaterial({color: 0xffffff, vertexColors: THREE.FaceColors});
+    for (var i = 0; i < geometry.faces.length; i++) {
+        geometry.faces[i].color.setRGB(Math.random(),Math.random(),Math.random());
+    }
+    var mesh = new THREE.Mesh(geometry,material);
+    mesh.receiveShadow = true;
+    mesh.castShadow = true;
+           //cene.add(mesh);
+    //var geometry2 = new THREE.BoxGeometry( 10000, 50, 10000, 1, 1, 1);
+    var geometry2 = new THREE.PlaneGeometry(10000,10000,1,1);
+    var material2 = new THREE.MeshPhongMaterial( {color: 0xee0000} );
+    var plane2 = new THREE.Mesh( geometry2, material2 );
+    plane2.receiveShadow = true;
+    plane2.castShadow = true;
+    plane2.rotation.x = 0;
+    plane2.position.z = -100;
+    scene.add( plane2 );
+
+    var loader = new THREE.GLTFLoader();
+
+    loader.load( 'models/prm-identity.glb', function ( gltf ) {
+       gltf.scene.traverse( function( node ) {
+
+               if ( node.isMesh ) { node.castShadow = true;
+               node.receiveShadow = true; }
+        } );
+       var meshBX = gltf.scene;
+
+       var d = 1;
+       meshBX.scale.set( d, d, d );
+       meshBX.position.z = 0;
+       meshBX.position.x = 0;
+       meshBX.position.y = 0;
+
+       var scaleBy = 20;
+       meshBX.scale.z = scaleBy;
+       meshBX.scale.x = scaleBy;
+       meshBX.scale.y = scaleBy;
+
+
+       meshBX.castShadow = true;
+       meshBX.receiveShadow = true;
+
+       scene.add( meshBX );
+
+ 				composer = new THREE.EffectComposer( renderer );
+ 				renderPass = new THREE.RenderPass( scene, camera );
+ 				composer.addPass( renderPass );
+ 				saoPass = new THREE.SAOPass( scene, camera, false, true );
+ 				composer.addPass( saoPass );
+    } );
+
+    function loop(){
+
+        requestAnimationFrame(loop);
+        //renderer.render(scene,camera);
+        if (typeof composer !== "undefined") {
+          composer.render();
+        }
+    }
+
+    loop();
+  </script>
