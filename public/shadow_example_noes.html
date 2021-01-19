@@ -62,8 +62,8 @@
     var mesh = new THREE.Mesh(geometry,material);
     mesh.receiveShadow = true;
     mesh.castShadow = true;
-           //cene.add(mesh);
-    //var geometry2 = new THREE.BoxGeometry( 10000, 50, 10000, 1, 1, 1);
+
+    // create some geometries
     var geometry2 = new THREE.PlaneGeometry(10000,10000,1,1);
     var material2 = new THREE.MeshPhongMaterial( {color: 0xee0000} );
     var plane2 = new THREE.Mesh( geometry2, material2 );
@@ -76,6 +76,8 @@
     var loader = new THREE.GLTFLoader();
 
     loader.load( 'models/prm-identity.glb', function ( gltf ) {
+
+       // Shadow effects for child nodes
        gltf.scene.traverse( function( node ) {
 
                if ( node.isMesh ) { node.castShadow = true;
@@ -95,23 +97,32 @@
        meshBX.scale.y = scaleBy;
 
 
+       // Shadow effects
        meshBX.castShadow = true;
        meshBX.receiveShadow = true;
 
        scene.add( meshBX );
 
+
+        // This produces the lighting effects
+
+        // EffectComposer is used to implement post-processing effects in three.js
+        // https://threejs.org/docs/#examples/en/postprocessing/EffectComposer
  				composer = new THREE.EffectComposer( renderer );
+
+        // https://redstapler.co/threejs-postprocessing-effect-tutorial/
  				renderPass = new THREE.RenderPass( scene, camera );
  				composer.addPass( renderPass );
- 				saoPass = new THREE.SAOPass( scene, camera, false, true );
+
+        // Checkout webgl_postprocessing_sao.html
  				composer.addPass( saoPass );
     } );
 
     function loop(){
 
         requestAnimationFrame(loop);
-        //renderer.render(scene,camera);
         if (typeof composer !== "undefined") {
+          // the composer is the new renderer
           composer.render();
         }
     }
